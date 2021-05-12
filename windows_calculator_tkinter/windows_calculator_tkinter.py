@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter.ttk import *
+import math 
+
 class Calculator():
     def __init__(self):
         self.root = tk.Tk()#Creamos nuestro objeto Tk
@@ -17,167 +19,235 @@ class Calculator():
 
 
 
-        #Output 1
+        #Salidas en pantalla e historial de calculos 
 
 
         self.output = tk.Label(self.root, text="0")
         self.output.place(x=377 , y= 149)
         self.output.config(bg="#FEFEFF", fg="black", font=("tahoma",16))
-
         self.texto = tk.StringVar() #La variable que contendra todo el texto de salida
         self.texto.set('0')
-
-        #Anteriores entradas
-        self.spacex_pre = 0
-        self.texto_pre = tk.StringVar() 
+        self.output.config(textvariable = self.texto)
 
         self.pre_output = tk.Label(self.root, text=" ")
         self.pre_output.place(x = 382 , y= 134)
         self.pre_output.config(bg="#FEFEFF", fg="black", font=("tahoma",8))
-
-
-
+        self.texto_pre = tk.StringVar() 
+        self.texto_pre.set('')        
+        self.pre_output.config(textvariable = self.texto_pre)
 
         self.pre_2 = tk.Label(self.root, text=" ")
         self.pre_2.place(x=382 , y= 111)
-        self.pre_2.config(bg="#E7F0FB", fg="grey", font=("tahoma",8))
         self.texto_pre_2 = tk.StringVar()
-        self.texto_pre_2.set('-')
-        self.pre_2.config(textvariable = self.texto_pre_2)
+        self.texto_pre_2.set('')        
+        self.pre_2.config(bg="#E7F0FB", fg="grey", font=("tahoma",8),textvariable = self.texto_pre_2)
 
         self.pre_3 = tk.Label(self.root, text=" ")
         self.pre_3.place(x=382 , y= 94)
-        self.pre_3.config(bg="#E7F0FB", fg="grey", font=("tahoma",8))
         self.texto_pre_3 = tk.StringVar()
-        self.texto_pre_3.set('-')
-        self.pre_3.config(textvariable = self.texto_pre_3)
+        self.texto_pre_3.set('')        
+        self.pre_3.config(bg="#E7F0FB", fg="grey", font=("tahoma",8),textvariable = self.texto_pre_3)
 
         self.pre_4 = tk.Label(self.root, text=" ")
         self.pre_4.place(x=382 , y= 77)
-        self.pre_4.config(bg="#E7F0FB", fg="grey", font=("tahoma",8))
         self.texto_pre_4 = tk.StringVar()
-        self.texto_pre_4.set('-')
-        self.pre_4.config(textvariable = self.texto_pre_4)
+        self.texto_pre_4.set('')        
+        self.pre_4.config(bg="#E7F0FB", fg="grey", font=("tahoma",8),textvariable = self.texto_pre_4)
 
         self.pre_5 = tk.Label(self.root, text=" ")
         self.pre_5.place(x=382 , y= 60)
-        self.pre_5.config(bg="#E7F0FB", fg="grey", font=("tahoma",8))
         self.texto_pre_5 = tk.StringVar()
-        self.texto_pre_5.set('-')
-        self.pre_5.config(textvariable = self.texto_pre_5)
+        self.texto_pre_5.set('')        
+        self.pre_5.config(bg="#E7F0FB", fg="grey", font=("tahoma",8),textvariable = self.texto_pre_5)
 
-        #Espacio que ocupa cada numero
-        self.numero_pantalla = True 
-        self.spacex = 377 #Tamano del cero
-        self.cont = False
 
+
+        self.block = False #Cuando hay un error
         #Funciones de agregado y eliminado:
 
         def click_boton(valor):
             '''Hace que se agregen los numeros en el output'''
-            if self.numero_pantalla == False:
-                self.texto.set(valor)
-                self.output.config(textvariable = self.texto)
-                self.spacex = 0
-                self.numero_pantalla = True
+            if self.block:
                 return 0
-            if self.texto.get() == '0':
-                if valor == '0':
-                    return 0
-                self.texto.set(valor)
-                self.output.config(textvariable = self.texto)
 
+            if valor == ".":
+                if "." in self.texto.get():
+                    return 0
+                if self.texto.get() == "0":
+                    self.texto.set("0.")
+                    self.output.config(textvariable = self.texto)
+                    self.output.place(x=377 - (len(self.texto.get())-1)*11, y= 149)
+                    return 0
+
+            if self.virtual_output: #Si la salida es virtual
+                self.virtual_output = False
+                self.texto.set(valor)
+                self.output.place(x=377 - (len(self.texto.get())-1)*11, y= 149)
             else:
-                self.texto.set(self.texto.get() + valor) 
-                self.output.config(textvariable = self.texto)
-                self.output.place(x= self.spacex , y= 149)
-            self.spacex -= 11
+                if valor == "0" and self.texto.get() == "0":#Si el usuario pone 0 cuando sólo hay un cero
+                    pass
+                elif valor != "0" and self.texto.get() == "0":#Si pone otro número cuando hay un cero
+                    self.texto.set(valor)
+                    self.output.config(textvariable = self.texto)
+                    self.output.place(x=377 - (len(self.texto.get())-1)*11, y= 149)
+                else:#Si el número en el output es diferente a 0
+                    self.texto.set(self.texto.get() + valor)
+                    self.output.place(x=377 - (len(self.texto.get())-1)*11, y= 149)
+                    self.output.config(textvariable = self.texto)
+                self.ultimo_signo = False
+
+                
 
         def borrarElemento():
-            if self.numero_pantalla != False:
-                if len(self.texto.get()) == 1 :
-                    if self.texto.get() == "0":
-                        return 0
+            if self.block:
+                return 0
+            if self.virtual_output == False: #Si la salida es virtual no hace nada
+
+                if len(self.texto.get()) == 1:#Si sólo queda un número que borrar
                     self.texto.set("0")
-                    self.output.config(textvariable = self.texto)
-                    self.cont = False
-                    return 0
-
-                else:
+                else:#Si son más de uno
                     self.texto.set(self.texto.get()[:-1])
-
-                if self.cont == False:
-                    self.spacex += 22
-                    self.cont = True
-                else:
-                    self.spacex += 11
-
+                self.output.place(x=377 - (len(self.texto.get())-1)*11, y= 149)
                 self.output.config(textvariable = self.texto)
-                self.output.place(x = self.spacex , y = 149)
 
-        def CE_function():
-            self.texto.set("0")             
-            self.output.config(textvariable = self.texto)
-            self.spacex = 377
-            self.output.place(x= self.spacex , y= 149)
-            self.cont = False
+        def CE_function():#Borra el output
+            self.texto.set("0")
+            self.output.config(bg="#FEFEFF", fg="black", font=("tahoma",16),textvariable = self.texto)             
+            self.output.place(x=377 , y= 149)
+
+            self.virtual_output = False
+            self.block = False #Desbloquear el error
 
 
-        def C_function():
-            self.texto.set("0")             
-            self.output.config(textvariable = self.texto)
-            self.spacex = 377
-            self.output.place(x= self.spacex , y= 149)
-            self.cont = False
 
-            self.texto_pre.set(" ")
-            self.pre_output.config(textvariable = self.texto_pre)
+        def C_function():#Borra el output y el pre texto
+            self.texto.set("0")
+            self.output.config(bg="#FEFEFF", fg="black", font=("tahoma",16),textvariable = self.texto)            
+            self.output.place(x=377 , y= 149)
+
+            self.texto_pre.set("")
+            self.pre_output.config(bg="#FEFEFF", fg="black", font=("tahoma",8),textvariable = self.texto_pre)             
+            self.pre_output.place(x = 382 , y= 134)
+
+            self.ultimo_signo = False
+            self.virtual_output = False
+            self.block = False#Desbloquear el error
 
         #Funciones aritmeticas
+        self.ultimo_signo = False #Para que no haya dos signos aritmeticos juntos
+        self.virtual_output = False 
+        
 
         def operacion(type_):
-            if self.numero_pantalla != False :
-                self.texto_pre.set(self.texto_pre.get() + self.texto.get() + " " + type_ + "")
-                self.pre_output.config(textvariable = self.texto_pre)
-                self.spacex_pre += 22
-                self.pre_output.place(x=382 - self.spacex_pre   , y= 134) 
-                self.numero_pantalla = False 
-            else:
-                self.texto_pre.set(self.texto_pre.get()[:-2] + " " + type_ + "")
-                self.pre_output.config(textvariable = self.texto_pre)
+            if self.block:
+                return 0
+            if self.ultimo_signo :#Si el ultimo caracter en el pre es un signo lo cambia por el nuevo
+                self.texto_pre.set(self.texto_pre.get()[-2] + type_ + " ")
+            else: #Si al final del pre hay un número
+                self.texto_pre.set(self.texto_pre.get() + self.texto.get() + " " + type_ + " ") 
+            self.pre_output.config(textvariable = self.texto_pre)             
+            self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2) , y= 134)
+
+            self.virtual_output = True
 
         def resultado():
+            if self.block:
+                return 0
 
-            if self.texto_pre_5.get() == "-":
-                self.pre_5.config(textvariable = self.texto_pre.get() + self.texto.get())
-                self.pre_5.place(x=382 - len(self.texto_pre.get() + self.texto.get())*(11/2), y= 60) 
-                print('ok')
+            result = ""
 
-            elif self.texto_pre_4.get() == "-":
-                self.pre_4.config(textvariable = self.texto_pre.get() + self.texto.get())
-                self.pre_4.place(x=382 -len(self.texto_pre.get() + self.texto.get())*(11/2) , y= 77)  
+            try:
+                result = str(eval(self.texto_pre.get() + self.texto.get()))
+            except Exception as e:
+            
+                self.texto.set('No se puede dividir entre cero')        
+                self.output.config(bg="#FEFEFF", fg="black", font=("tahoma",12),textvariable = self.texto)
+                self.output.place(x=377 - (len(self.texto.get())-1)*(8.25) , y= 149)
+                self.block = True
+                return 0
 
-            elif self.texto_pre_3.get() == "-":
-                self.pre_3.config(textvariable = self.texto_pre.get() + self.texto.get())
-                self.pre_3.place(x=382 -len(self.texto_pre.get() + self.texto.get())*(11/2) , y= 94)
+            if self.texto_pre_5.get() == "":
+                self.texto_pre_5.set(self.texto_pre.get() + self.texto.get())
+                self.pre_5.place(x=382 - (len(self.texto_pre_5.get())-1)*(11/2) , y= 60)
+                self.pre_5.config(textvariable = self.texto_pre_5)
 
-            elif self.texto_pre_2.get() == "-":
-                self.pre_2.config(textvariable = self.texto_pre.get() + self.texto.get())
-                self.pre_2.place(x=382 -len(self.texto_pre.get() + self.texto.get())*(11/2) , y= 111)
+            elif self.texto_pre_4.get() == "":
+                self.texto_pre_4.set(self.texto_pre.get()+ self.texto.get())
+                self.pre_4.place(x=382 - (len(self.texto_pre_4.get())-1)*(11/2) , y= 77)
+                self.pre_4.config(textvariable = self.texto_pre_4)
+                
+            elif self.texto_pre_3.get() == "":
+                self.texto_pre_3.set(self.texto_pre.get()+ self.texto.get())
+                self.pre_3.place(x=382 - (len(self.texto_pre_3.get())-1)*(11/2) , y= 94)
+                self.pre_3.config(textvariable = self.texto_pre_3)  
+
+            elif self.texto_pre_2.get() == "":
+                self.texto_pre_2.set(self.texto_pre.get()+ self.texto.get())
+                self.pre_2.place(x=382 - (len(self.texto_pre_2.get())-1)*(11/2) , y= 111)
+                self.pre_2.config(textvariable = self.texto_pre_2)
+
 
             else:
-                self.pre_5.config(textvariable = self.texto_pre_4.get())
-                self.pre_4.config(textvariable = self.texto_pre_3.get())
-                self.pre_3.config(textvariable = self.texto_pre_2.get())
-                self.pre_2.config(textvariable = self.texto_pre.get() + self.texto.get())
+                self.texto_pre_5.set(self.texto_pre_4.get())
+                self.pre_5.place(x=382 - (len(self.texto_pre_5.get())-1)*(11/2) , y= 60)
+                self.pre_5.config(textvariable = self.texto_pre_5)                
 
-            self.output.config(textvariable = "resultado")
-            self.output.place(x = 377 , y = 149)
-            self.spacex = 377
+                self.texto_pre_4.set(self.texto_pre_3.get())
+                self.pre_4.place(x=382 - (len(self.texto_pre_4.get())-1)*(11/2) , y= 77)
+                self.pre_4.config(textvariable = self.texto_pre_4)
 
-            self.spacex_pre = 0
-            self.pre_output.place(x = 382, y = 134)
-            self.texto_pre.set(" ")
+                self.texto_pre_3.set(self.texto_pre_3.get())
+                self.pre_3.place(x=382 - (len(self.texto_pre_3.get())-1)*(11/2) , y= 94)
+                self.pre_3.config(textvariable = self.texto_pre_3)
+
+                self.texto_pre_2.set(self.texto_pre.get()+ self.texto.get())
+                self.pre_2.place(x=382 - (len(self.texto_pre_2.get())-1)*(11/2) , y= 111)
+                self.pre_2.config(textvariable = self.texto_pre_2)
+
+
+            self.texto.set(result)
+            self.output.config(textvariable = self.texto)             
+            self.output.place(x=377 - (len(self.texto.get())-1)*(11), y= 149)
+
+            self.texto_pre.set("")
+            self.pre_output.config(textvariable = self.texto_pre)             
+            self.pre_output.place(x = 382 , y= 134)
+
+            self.ultimo_signo = False
+            self.virtual_output = False
+
+
+        def negate():
+            '''Cambio de signo'''
+            if eval(self.texto.get()) > 0:
+                self.texto.set("-"+self.texto.get())
+                self.output.place(x=377 - (len(self.texto.get())-2)*(11) -8, y= 149) 
+
+            else:
+                self.texto.set(self.texto.get()[1:])
+                self.output.place(x = 377 - (len(self.texto.get())-1)*(11), y= 149) 
+
+            self.output.config(textvariable = self.texto)
+
+        def raiz():
+            if self.ultimo_signo == True:
+                self.texto_pre.set(self.texto_pre.get() + " math.sqrt(" + self.texto.get() + ")" )
+            else:
+                text_list = self.texto_pre.get().split(" ")
+                self.texto_pre.set(" ".join(text_list[:-1])  + " math.sqrt(" + text_list[-1] + ")"  )
+
+            self.pre_output.config(textvariable = self.texto_pre)             
+            self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2), y= 134)
+
+            self.ultimo_signo = False
+
+        def reciproco():
+            self.texto_pre.set("math.sqrt")
+            self.pre_output.config(textvariable = self.texto_pre)             
+            self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2), y= 134)           
+
+
+
 
 		#Botones
 
@@ -236,11 +306,11 @@ class Calculator():
         BotonC.place(x=287 , y= 220)
 
         imagenBotonMasMenos = tk.PhotoImage(file="files//imagenBotonMasMenos.png")#Fondo
-        BotonMasMenos = tk.Button(self.root,command=lambda: null,bd=0, image=imagenBotonMasMenos,background="#8B9BAD")
+        BotonMasMenos = tk.Button(self.root,command=lambda: negate(),bd=0, image=imagenBotonMasMenos,background="#8B9BAD")
         BotonMasMenos.place(x=326 , y= 220)
 
         imagenBotonRaiz = tk.PhotoImage(file="files//imagenBotonRaiz.png")#Fondo
-        BotonRaiz = tk.Button(self.root,command=lambda: null,bd=0, image=imagenBotonRaiz,background="#8B9BAD")
+        BotonRaiz = tk.Button(self.root,command=lambda: raiz(),bd=0, image=imagenBotonRaiz,background="#8B9BAD")
         BotonRaiz.place(x=365 , y= 220)
 
 
@@ -333,7 +403,7 @@ class Calculator():
 #Quinto
 
         imagenBotonpi = tk.PhotoImage(file="files//imagenBotonpi.png")#Fondo
-        Botonpi = tk.Button(self.root,command=lambda: null,bd=0, image=imagenBotonpi,background="#8B9BAD")
+        Botonpi = tk.Button(self.root,command=lambda: click_boton("3.14159265"),bd=0, image=imagenBotonpi,background="#8B9BAD")
         Botonpi.place(x=14 , y= 316)
 
         imagenBotonTanh = tk.PhotoImage(file="files//imagenBotonTanh.png")#Fondo
@@ -399,7 +469,7 @@ class Calculator():
         Boton0.place(x=209 , y= 348)
 
         imagenBotonPunto = tk.PhotoImage(file="files//imagenBotonPunto.png")#Fondo
-        BotonPunto = tk.Button(self.root,command=lambda: null,bd=0, image=imagenBotonPunto,background="#8B9BAD")
+        BotonPunto = tk.Button(self.root,command=lambda: click_boton("."),bd=0, image=imagenBotonPunto,background="#8B9BAD")
         BotonPunto.place(x=287 , y= 348)
 
         imagenBotonSuma = tk.PhotoImage(file="files//imagenBotonSuma.png")#Fondo
