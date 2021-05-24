@@ -67,6 +67,8 @@ class Calculator():
 
         def click_boton(valor):
             '''Hace que se agregen los numeros en el output'''
+            self.ultimo_signo = False
+
             if self.block:
                 return 0
 
@@ -134,7 +136,7 @@ class Calculator():
             self.block = False#Desbloquear el error
 
         #Funciones aritmeticas
-        self.ultimo_signo = False #Para que no haya dos signos aritmeticos juntos
+        self.ultimo_signo = False #Para que no haya dos signos aritmeticos juntos, ejemplo : */ 
         self.virtual_output = False 
         
 
@@ -142,13 +144,15 @@ class Calculator():
             if self.block:
                 return 0
             if self.ultimo_signo :#Si el ultimo caracter en el pre es un signo lo cambia por el nuevo
-                self.texto_pre.set(self.texto_pre.get()[-2] + type_ + " ")
+                self.texto_pre.set(self.texto_pre.get()[:-2] + type_ + " ")
+
             else: #Si al final del pre hay un número
                 self.texto_pre.set(self.texto_pre.get() + self.texto.get() + " " + type_ + " ") 
             self.pre_output.config(textvariable = self.texto_pre)             
             self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2) , y= 134)
 
             self.virtual_output = True
+            self.ultimo_signo = True
 
         def resultado():
             if self.block:
@@ -160,7 +164,8 @@ class Calculator():
                 result = str(eval(self.texto_pre.get() + self.texto.get()))
             except Exception as e:
             
-                self.texto.set('No se puede dividir entre cero')        
+                self.texto.set('No se puede dividir entre cero')
+                print(eval(self.texto_pre.get() + self.texto.get()))        
                 self.output.config(bg="#FEFEFF", fg="black", font=("tahoma",12),textvariable = self.texto)
                 self.output.place(x=377 - (len(self.texto.get())-1)*(8.25) , y= 149)
                 self.block = True
@@ -219,9 +224,12 @@ class Calculator():
 
         def negate():
             '''Cambio de signo'''
-            if eval(self.texto.get()) > 0:
+            if  eval(self.texto.get()) == 0:
+                pass
+            elif eval(self.texto.get()) > 0:
                 self.texto.set("-"+self.texto.get())
-                self.output.place(x=377 - (len(self.texto.get())-2)*(11) -8, y= 149) 
+                self.output.place(x=377 - (len(self.texto.get())-2)*(11) -8, y= 149)
+
 
             else:
                 self.texto.set(self.texto.get()[1:])
@@ -232,19 +240,32 @@ class Calculator():
         def raiz():
             if self.ultimo_signo == True:
                 self.texto_pre.set(self.texto_pre.get() + " math.sqrt(" + self.texto.get() + ")" )
+
             else:
+
                 text_list = self.texto_pre.get().split(" ")
-                self.texto_pre.set(" ".join(text_list[:-1])  + " math.sqrt(" + text_list[-1] + ")"  )
+
+                self.texto_pre.set(" ".join(text_list[:-1])  + " math.sqrt(" + self.texto.get() + ")"  )
 
             self.pre_output.config(textvariable = self.texto_pre)             
             self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2), y= 134)
 
             self.ultimo_signo = False
+            self.virtual_output = True
+            self.texto.set(" ") 
+
+
+
+            #Mostramo el resultado hasta ese punto
+
 
         def reciproco():
-            self.texto_pre.set("math.sqrt")
+            self.texto_pre.set("(1/" + self.texto.get() + ")")
             self.pre_output.config(textvariable = self.texto_pre)             
-            self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2), y= 134)           
+            self.pre_output.place(x = 382 - (len(self.texto_pre.get())-1)*(11/2), y= 134)
+            self.virtual_output = True
+            self.texto.set(" ") 
+                       
 
 
 
@@ -397,7 +418,7 @@ class Calculator():
         BotonProducto.place(x=326 , y= 284)
 
         imagenBoton1x = tk.PhotoImage(file="files//imagenBoton1x.png")#Fondo
-        Boton1x = tk.Button(self.root,command=lambda: null,bd=0, image=imagenBoton1x,background="#8B9BAD")
+        Boton1x = tk.Button(self.root,command=lambda: reciproco(),bd=0, image=imagenBoton1x,background="#8B9BAD")
         Boton1x.place(x=365 , y= 284)
 
 #Quinto
